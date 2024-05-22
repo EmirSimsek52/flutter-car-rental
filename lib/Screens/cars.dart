@@ -1,29 +1,66 @@
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/Constants/enviroments.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
-class Cars extends StatelessWidget {
-  final List<CarItem> carItems = [
-    CarItem(
-      imageUrl:
-          'https://rk.mb-qr.com/media/thumbnails/cards/205040_000_200221_101604_SFL2052_8.png.860x860_q95.png',
-      carName: 'Mercedes-Benz C-Class',
-      price: '\$50/Day',
-      km: '250km/Daily',
-    ),
-    CarItem(
-      imageUrl:
-          'https://www.motortrend.com/uploads/sites/10/2020/03/2020-volvo-xc90-momentum-4wd-suv-angular-front.png',
-      carName: 'Volvo XC-90',
-      price: '\$45/Day',
-      km: '300km/Daily',
-    ),
-    CarItem(
-      imageUrl:
-          'https://images.dealer.com/ddc/vehicles/2024/Audi/A4/Sedan/perspective/front-left/2024_24.png',
-      carName: 'Audi A4',
-      price: '\$48/Day',
-      km: '300km/Daily',
-    ),
-  ];
+class Cars extends StatefulWidget {
+  @override
+  _CarsState createState() => _CarsState();
+}
+
+class _CarsState extends State<Cars> {
+  List<CarItem> carItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    fetchCars();
+  }
+
+  Future<void> fetchCars() async {
+    try {
+      final response =
+          await http.get(Uri.parse(Enviroments.API_URL + '/cars2'));
+      if (response.statusCode == 200) {
+        final List<dynamic> responseData = json.decode(response.body);
+        setState(() {
+          carItems = responseData.map((data) {
+            return CarItem(
+              imageUrl: data['url'],
+              carName: data['make'],
+              price: '\$${data['price']}/Day',
+              km: '${data['kmLimit']}km/Daily',
+            );
+          }).toList();
+        });
+      } else {
+        throw Exception('Failed to load cars');
+      }
+    } catch (e) {
+      // Hata durumunda, konsola hatayı yazdırabiliriz.
+      print('Error fetching cars: $e');
+      // Kullanıcıya bilgi vermek için bir dialog veya snackbar gösterebiliriz.
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Failed to load cars. Please try again later.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
