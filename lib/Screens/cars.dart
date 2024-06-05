@@ -1,9 +1,6 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Constants/enviroments.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:flutter/foundation.dart';
+import 'package:flutter_application_1/database_helper.dart';
 
 class Cars extends StatefulWidget {
   @override
@@ -16,50 +13,21 @@ class _CarsState extends State<Cars> {
   @override
   void initState() {
     super.initState();
-    fetchCars();
+    _loadCars();
   }
 
-  Future<void> fetchCars() async {
-    try {
-      final response =
-          await http.get(Uri.parse(Enviroments.API_URL + '/cars2'));
-      if (response.statusCode == 200) {
-        final List<dynamic> responseData = json.decode(response.body);
-        setState(() {
-          carItems = responseData.map((data) {
-            return CarItem(
-              imageUrl: data['url'],
-              carName: data['make'],
-              price: '\$${data['price']}/Day',
-              km: '${data['kmLimit']}km/Daily',
-            );
-          }).toList();
-        });
-      } else {
-        throw Exception('Failed to load cars');
-      }
-    } catch (e) {
-      // Hata durumunda, konsola hatayı yazdırabiliriz.
-      print('Error fetching cars: $e');
-      // Kullanıcıya bilgi vermek için bir dialog veya snackbar gösterebiliriz.
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: Text('Error'),
-            content: Text('Failed to load cars. Please try again later.'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    }
+  Future<void> _loadCars() async {
+    List<Map<String, dynamic>> carList = await DatabaseHelper().getAllCars();
+    setState(() {
+      carItems = carList.map((car) {
+        return CarItem(
+          imageUrl: car['image_url'],
+          carName: car['name'],
+          price: car['daily_price'],
+          km: car['daily_km'],
+        );
+      }).toList();
+    });
   }
 
   @override
@@ -96,12 +64,14 @@ class _CarsState extends State<Cars> {
                 ),
                 SizedBox(height: 20),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: carItems.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return CarListItem(carItem: carItems[index]);
-                    },
-                  ),
+                  child: carItems.isEmpty
+                      ? Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          itemCount: carItems.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return CarListItem(carItem: carItems[index]);
+                          },
+                        ),
                 ),
               ],
             ),

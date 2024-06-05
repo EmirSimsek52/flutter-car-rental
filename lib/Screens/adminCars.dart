@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/database_helper.dart';
 
 class AdminCars extends StatefulWidget {
   @override
@@ -6,29 +7,33 @@ class AdminCars extends StatefulWidget {
 }
 
 class _AdminCarsState extends State<AdminCars> {
-  List<CarItem> carItems = [
-    CarItem(
-      imageUrl:
-          'https://rk.mb-qr.com/media/thumbnails/cards/205040_000_200221_101604_SFL2052_8.png.860x860_q95.png',
-      carName: 'Mercedes-Benz C-Class',
-      price: '\$50/Day',
-      km: '250km/Daily',
-    ),
-    CarItem(
-      imageUrl:
-          'https://www.motortrend.com/uploads/sites/10/2020/03/2020-volvo-xc90-momentum-4wd-suv-angular-front.png',
-      carName: 'Volvo XC-90',
-      price: '\$45/Day',
-      km: '300km/Daily',
-    ),
-    CarItem(
-      imageUrl:
-          'https://images.dealer.com/ddc/vehicles/2024/Audi/A4/Sedan/perspective/front-left/2024_24.png',
-      carName: 'Audi A4',
-      price: '\$48/Day',
-      km: '300km/Daily',
-    ),
-  ];
+  List<CarItem> carItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCars();
+  }
+
+  Future<void> _loadCars() async {
+    List<Map<String, dynamic>> carList = await DatabaseHelper().getAllCars();
+    setState(() {
+      carItems = carList.map((car) {
+        return CarItem(
+          imageUrl: car['image_url'],
+          carName: car['name'],
+          price: car['daily_price'],
+          km: car['daily_km'],
+        );
+      }).toList();
+    });
+  }
+
+  Future<void> _deleteCar(int index) async {
+    String carName = carItems[index].carName;
+    await DatabaseHelper().deleteCar(carName);
+    _loadCars(); // Refresh the car list
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,43 +70,43 @@ class _AdminCarsState extends State<AdminCars> {
               children: [
                 SizedBox(height: 20),
                 Expanded(
-                  child: ListView.builder(
-                    itemCount: carItems.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return CarListItem(
-                        carItem: carItems[index],
-                        onDelete: () {
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: Text("Confirmation"),
-                                content: Text(
-                                    "Are you sure you want to delete this car?"),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      setState(() {
-                                        carItems.removeAt(index);
-                                      });
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text("Yes"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child: Text("No"),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        },
-                      );
-                    },
-                  ),
+                  child: carItems.isEmpty
+                      ? Center(child: CircularProgressIndicator())
+                      : ListView.builder(
+                          itemCount: carItems.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            return CarListItem(
+                              carItem: carItems[index],
+                              onDelete: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text("Confirmation"),
+                                      content: Text(
+                                          "Are you sure you want to delete this car?"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            _deleteCar(index);
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text("Yes"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: Text("No"),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:flutter_application_1/database_helper.dart';
 
 class Reservations extends StatefulWidget {
   @override
@@ -7,40 +7,26 @@ class Reservations extends StatefulWidget {
 }
 
 class _ReservationsState extends State<Reservations> {
-  List<ReservationItem> reservationItems = [
-    ReservationItem(
-      carName: 'Mercedes-Benz C-Class',
-      name: 'Emir Şimşek',
-      phoneNumber: '+1234567890',
-      pickupDate: '2024-04-01',
-      returnDate: '2024-04-05',
-      deliveryAddress: 'İstanbul',
-    ),
-    ReservationItem(
-      carName: 'Volvo XC-90',
-      name: 'Betül Sude Var',
-      phoneNumber: '+1234567890',
-      pickupDate: '2024-04-01',
-      returnDate: '2024-04-05',
-      deliveryAddress: 'Beylikdüzü',
-    ),
-    ReservationItem(
-      carName: 'Audi A4',
-      name: 'Adem Şimşek',
-      phoneNumber: '+1234567890',
-      pickupDate: '2024-04-01',
-      returnDate: '2024-04-05',
-      deliveryAddress: 'İzmir',
-    ),
-    ReservationItem(
-      carName: 'BMW X5',
-      name: 'Elvan Şimşek',
-      phoneNumber: '+1234567890',
-      pickupDate: '2024-04-01',
-      returnDate: '2024-04-05',
-      deliveryAddress: 'İstanbul',
-    ),
-  ];
+  List<Map<String, dynamic>> reservationItems = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchReservations();
+  }
+
+  Future<void> _fetchReservations() async {
+    List<Map<String, dynamic>> fetchedReservations =
+        await DatabaseHelper().getAllReservations();
+    setState(() {
+      reservationItems = fetchedReservations;
+    });
+  }
+
+  void _deleteReservation(int id) async {
+    await DatabaseHelper().deleteReservation(id);
+    _fetchReservations();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,8 +66,9 @@ class _ReservationsState extends State<Reservations> {
                   child: ListView.builder(
                     itemCount: reservationItems.length,
                     itemBuilder: (BuildContext context, int index) {
+                      var reservation = reservationItems[index];
                       return ReservationItemWidget(
-                        reservationItem: reservationItems[index],
+                        reservationItem: reservation,
                         onDelete: () {
                           showDialog(
                             context: context,
@@ -93,9 +80,7 @@ class _ReservationsState extends State<Reservations> {
                                 actions: [
                                   TextButton(
                                     onPressed: () {
-                                      setState(() {
-                                        reservationItems.removeAt(index);
-                                      });
+                                      _deleteReservation(reservation['id']);
                                       Navigator.of(context).pop();
                                     },
                                     child: Text("Yes"),
@@ -124,26 +109,8 @@ class _ReservationsState extends State<Reservations> {
   }
 }
 
-class ReservationItem {
-  final String carName;
-  final String name;
-  final String phoneNumber;
-  final String pickupDate;
-  final String returnDate;
-  final String deliveryAddress;
-
-  ReservationItem({
-    required this.carName,
-    required this.name,
-    required this.phoneNumber,
-    required this.pickupDate,
-    required this.returnDate,
-    required this.deliveryAddress,
-  });
-}
-
 class ReservationItemWidget extends StatelessWidget {
-  final ReservationItem reservationItem;
+  final Map<String, dynamic> reservationItem;
   final VoidCallback onDelete;
 
   const ReservationItemWidget({
@@ -157,15 +124,15 @@ class ReservationItemWidget extends StatelessWidget {
     return Card(
       margin: EdgeInsets.symmetric(vertical: 15),
       child: ListTile(
-        title: Text('Car Name: ${reservationItem.carName}'),
+        title: Text('Car Name: ${reservationItem['carName']}'),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Name: ${reservationItem.name}'),
-            Text('Phone Number: ${reservationItem.phoneNumber}'),
-            Text('Pickup Date: ${reservationItem.pickupDate}'),
-            Text('Return Date: ${reservationItem.returnDate}'),
-            Text('Delivery Address: ${reservationItem.deliveryAddress}'),
+            Text('Name: ${reservationItem['name']}'),
+            Text('Phone Number: ${reservationItem['phoneNumber']}'),
+            Text('Pickup Date: ${reservationItem['pickupDate']}'),
+            Text('Return Date: ${reservationItem['returnDate']}'),
+            Text('Delivery Address: ${reservationItem['deliveryAddress']}'),
             InkWell(
               onTap: onDelete,
               child: Text(

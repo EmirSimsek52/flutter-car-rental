@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/database_helper.dart';
 
 class RentalForm extends StatefulWidget {
   @override
@@ -32,6 +33,55 @@ class _RentalFormState extends State<RentalForm> {
     setState(() {
       isButtonEnabled = isValid;
     });
+  }
+
+  void _submitForm() async {
+    String carName = carNameController.text;
+    String name = nameController.text;
+    String phone = phoneController.text;
+    String pickupDate = pickupDateController.text;
+    String returnDate = returnDateController.text;
+    String deliveryAddress = deliveryAddressController.text;
+
+    Map<String, dynamic> rental = {
+      'carName': carName,
+      'name': name,
+      'phoneNumber': phone,
+      'pickupDate': pickupDate,
+      'returnDate': returnDate,
+      'deliveryAddress': deliveryAddress,
+    };
+
+    await DatabaseHelper().insertReservation(rental);
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Reservation Added'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Car Name: $carName'),
+              Text('Name: $name'),
+              Text('Phone Number: $phone'),
+              Text('Pickup Date: $pickupDate'),
+              Text('Return Date: $returnDate'),
+              Text('Delivery Address: $deliveryAddress'),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -106,45 +156,7 @@ class _RentalFormState extends State<RentalForm> {
               ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: isButtonEnabled
-                  ? () {
-                      String carName = carNameController.text;
-                      String name = nameController.text;
-                      String phone = phoneController.text;
-                      String pickupDate = pickupDateController.text;
-                      String returnDate = returnDateController.text;
-                      String deliveryAddress = deliveryAddressController.text;
-
-                      showDialog(
-                        context: context,
-                        builder: (BuildContext context) {
-                          return AlertDialog(
-                            title: Text('Your Reservation Details'),
-                            content: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text('Car Name: $carName'),
-                                Text('Name: $name'),
-                                Text('Phone Number: $phone'),
-                                Text('Pickup Date: $pickupDate'),
-                                Text('Return Date: $returnDate'),
-                                Text('Delivery Address: $deliveryAddress'),
-                              ],
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () {
-                                  Navigator.of(context).pop();
-                                },
-                                child: Text('OK'),
-                              ),
-                            ],
-                          );
-                        },
-                      );
-                    }
-                  : null,
+              onPressed: isButtonEnabled ? _submitForm : null,
               child: Text('Submit'),
             ),
           ],

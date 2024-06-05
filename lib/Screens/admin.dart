@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_application_1/Constants/enviroments.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../Screens/adminPanel.dart';
@@ -14,42 +13,6 @@ class Admin extends StatefulWidget {
 class _AdminState extends State<Admin> {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-
-  Future<void> loginUser(String username, String password) async {
-    final url = Uri.parse(Enviroments.API_URL + '/login');
-    final response = await http.post(
-      url,
-      body: jsonEncode({'username': username, 'password': password}),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      // Successful login
-      final token = jsonDecode(response.body)['token'];
-      // Navigate to next screen or perform actions using the token
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => AdminPanel()),
-      );
-    } else {
-      // Unsuccessful login
-      showDialog(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Error'),
-            content: const Text('Incorrect username or password.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,7 +69,31 @@ class _AdminState extends State<Admin> {
                   onPressed: () {
                     String username = usernameController.text;
                     String password = passwordController.text;
-                    loginUser(username, password);
+
+                    if (username == 'admin' && password == 'admin123') {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => AdminPanel()),
+                      );
+                    } else {
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: Text('Error'),
+                            content: Text('Incorrect username or password.'),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop();
+                                },
+                                child: Text('OK'),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    }
                   },
                   child: const Text('Login to Admin Panel'),
                 ),
